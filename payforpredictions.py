@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# <nbformat>3.0</nbformat>
-
-# <markdowncell>
-
 # # Solving the pay for prediction challenge
 # 
 # This document is a collaboratively developed IPython Notebook to solve the ["Pay for prediction" challenge][PFPC].
@@ -11,15 +6,11 @@
 # 
 # [PFPC]: http://www.climatecentre.org/site/paying-for-predictions
 
-# <markdowncell>
-
 # ## Outline
 # 
 # - Overview of the challenge
 # - The simulator
 # - The solutions
-
-# <markdowncell>
 
 # ### Overview
 # 
@@ -31,8 +22,7 @@
 #  
 # The Red Cross Red Crescent Climate Centre is launching a competition to find the best strategy for how to manage disaster risk in the game Paying for Predictions. This game demonstrates the many responsibilities of a humanitarian worker, from long-term preparedness to short-term anticipation of a disaster. In this global competition, we would like you to submit a strategy which you think will make a player win this game more often than other strategies.
 # 
-
-# <markdowncell>
+# 
 
 # #### How does this work?
 # 
@@ -41,8 +31,6 @@
 # A computer programme will use your strategy as if you were a person playing this game against other people over and over again. After many games are played, the programme will show which strategy wins most often.
 # 
 # We will announce the winners in March 2013. 
-
-# <markdowncell>
 
 # #### Competition rules
 # 
@@ -58,8 +46,6 @@
 # team.
 # - There are 10 rounds in this game.
 
-# <markdowncell>
-
 # #### Game setup
 # 
 # Each player receives 10 beans (resources), and one 
@@ -71,15 +57,13 @@
 # 
 # - The individual WINNER is the person with the most beans.
 # - The team WINNER is the team with fewest total  humanitarian crises. If there is a tie the team with most total beans combined is the team winner.
-
-# <markdowncell>
+# 
 
 # ### Simulator
 # 
 # The simulator is setup with some default strategies. These are for illustrative purposes.
 
-# <codecell>
-
+# In[1]:
 import numpy as np
 
 n_teams = 10
@@ -96,28 +80,35 @@ def initialize():
     drr_teams = np.ones((n_teams))  # have disaster risk reduction
     return beans, forecast_teams, drr_teams
 
-# <codecell>
-
+# In[2]:
 def get_forecast_bids(beans):
     """ Defines how each person or team will bid for regional forecast
-    """
+
+    Example
+    -------
+
     return np.random.randint(0, np.max(beans) * .4, size=beans.shape)
+    """
+    return np.ones(beans.shape)
 
 def get_drr_bids(beans):
     """ Defines how each person or team will bid for disaster risk reduction
-    """
+
+    Example
+    -------
+
     bids = np.zeros(beans.shape)
     for i in range(beans.shape[0]):
         for j in range(beans.shape[1]):
             bids[i, j] = np.random.randint(0, beans[i, j] * .2)
+    """
+    bids = np.ones(beans.shape)
     return bids
 
-# <markdowncell>
 
 # ##### Gameplay: Stage 1 perform bids
 
-# <codecell>
-
+# In[3]:
 beans, forecast_teams, drr_teams = initialize()
 
 # perform forecast bids
@@ -131,8 +122,13 @@ beans = beans - (forecast_teams[:, None] * forecast_bids)
 print beans.T
 print forecast_teams
 
-# <codecell>
-
+# Out[3]:
+#     [[ 10.  10.  10.  10.  10.   9.   9.   9.   9.   9.]
+#      [ 10.  10.  10.  10.  10.   9.   9.   9.   9.   9.]
+#      [ 10.  10.  10.  10.  10.   9.   9.   9.   9.   9.]]
+#     [ 0.  0.  0.  0.  0.  1.  1.  1.  1.  1.]
+# 
+# In[4]:
 # perform drr bids
 drr_bids = get_drr_bids(beans)
 drr_team_bids = np.sum(drr_bids, axis=1)
@@ -145,28 +141,29 @@ print beans.T
 print forecast_teams
 print drr_teams
 
-# <markdowncell>
-
+# Out[4]:
+#     [[ 10.  10.  10.  10.  10.   9.   9.   9.   8.   8.]
+#      [ 10.  10.  10.  10.  10.   9.   9.   9.   8.   8.]
+#      [ 10.  10.  10.  10.  10.   9.   9.   9.   8.   8.]]
+#     [ 0.  0.  0.  0.  0.  1.  1.  1.  1.  1.]
+#     [ 0.  0.  0.  0.  0.  0.  0.  0.  1.  1.]
+# 
 # #### Round
 
-# <codecell>
-
+# In[5]:
 def get_insurance_payments(regional_predictions, drr_teams, beans, round_idx):
+    # determine the likelihood of a flood
     likelihood = (7 - (target_rain - regional_predictions)) / 6
+    # if likelihood > .2 pay, or if you didn't have a prediction pay one bean
     payments = ((likelihood > .2) + (regional_predictions < 1))[:, None] * np.ones(beans.shape)
     return (payments * (beans > 0)).astype(int)
 
-# <codecell>
-
+# In[6]:
 def generate_rainfall(n_sides):
     regional_rainfall = np.random.randint(1, n_sides, size=(n_teams))
     local_rainfall = np.random.randint(1, 7, size=(n_teams, n_persons_per_team))
     total_rainfall = local_rainfall + regional_rainfall[:, None]
     flooded = (total_rainfall >= target_rain).astype(np.int)
-    #print regional_rainfall
-    #print local_rainfall.T
-    #print total_rainfall.T
-    #print flooded.T
     return regional_rainfall, flooded
 
 def adjust_beans(beans, payments, flooded, round_idx, drr_teams):
@@ -184,16 +181,13 @@ def adjust_beans(beans, payments, flooded, round_idx, drr_teams):
     in_crisis = already_in_crisis - beans_joining_crisis
     return beans + in_crisis
 
-# <markdowncell>
-
 # #### Simulate
 
-# <codecell>
-
+# In[7]:
 print beans.T
 for turn in range(n_rounds):
     n_sides = 6
-    if turn == 6:
+    if turn == 6: # 7th round
         n_sides = 8
     regional_rainfall, flooded = generate_rainfall(n_sides=n_sides)
     payments = get_insurance_payments(regional_rainfall * forecast_teams, drr_teams, beans, turn + 1)
@@ -202,13 +196,60 @@ for turn in range(n_rounds):
         print turn + 1, flooded.T - payments.T
 print beans.T
 
-# <markdowncell>
-
+# Out[7]:
+#     [[ 10.  10.  10.  10.  10.   9.   9.   9.   8.   8.]
+#      [ 10.  10.  10.  10.  10.   9.   9.   9.   8.   8.]
+#      [ 10.  10.  10.  10.  10.   9.   9.   9.   8.   8.]]
+#     1 [[-1 -1 -1  0 -1  0  0  0  0  0]
+#      [-1 -1 -1  0 -1  0  0  0 -1  0]
+#      [-1 -1  0 -1 -1  0  0  0 -1  0]]
+#     3 [[-1 -1 -1  0 -1  0 -1  0  0  0]
+#      [-1 -1 -1  0 -1  0 -1  0  0  0]
+#      [-1  0 -1  0 -1  0 -1  0  0  0]]
+#     5 [[-1 -1 -1 -1  0  0  0  0  0 -1]
+#      [-1 -1 -1  0  0  0 -1  0  0 -1]
+#      [-1 -1 -1 -1 -1  0  0  0  1  0]]
+#     7 [[-1 -1 -1  0 -1  0  0  0 -1  0]
+#      [-1 -1 -1  0 -1  0  0  0  0  1]
+#      [-1 -1 -1  0  0  0  0  0 -1  0]]
+#     9 [[-1 -1  0 -1  0  0  0  0  0  0]
+#      [-1 -1 -1 -1 -1  0  0  0  0  0]
+#      [-1 -1  0 -1 -1  0  0  0  0  0]]
+#     [[ 0.  0.  0.  0.  0.  8.  2.  7.  3.  5.]
+#      [ 0.  0.  0.  0.  0.  4.  2.  7.  5.  3.]
+#      [ 0.  0.  0.  0.  0.  8.  2.  7.  3.  5.]]
+# 
 # ### Solutions
 # 
-# Forthcoming
+# Example from challenge guidelines
+# 
+#     # This is a complete example submission for the "Paying for Predictions" game.
+#     # Blank lines or lines beginning with "#" are ignored.
+#     # Bids:
+#     Bid 1 for the forecast.
+#     Bid 3 beans for DRR.
+#     # Conditions:
+#     If I won the forecast and the dice is less than 5 and the beans remaining are more than 7, then take 
+#     early action.
+#     If I have forecast and the dice rolls more than the number of rounds remaining, then take early 
+#     action.
+#     If I don't have DRR and the dice rolls more than 5 and the rounds played are more than 6, then take 
+#     early action.
+#     Else, take no early action.
+# 
 
-# <codecell>
+# #### Solution from the strategies chosen for the simulation
+# 
+#     # This is a complete example submission for the "Paying for Predictions" game.
+#     # Blank lines or lines beginning with "#" are ignored.
+#     # Bids:
+#     Bid 1 for the forecast.
+#     Bid 1 beans for DRR.
+#     # Conditions:
+#     If I have forecast and the rolled dice is more than 4 then take early action.
+#     If I don't have forecast then take early action.
+#     By default take no action.
+# 
 
+# In[8]:
 !/software/challenges/nbconvert/nbconvert.py -f reveal /software/challenges/payforpredictions/payforpredictions.ipynb
-
