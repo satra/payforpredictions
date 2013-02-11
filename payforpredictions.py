@@ -251,5 +251,68 @@ print beans.T
 #     By default take no action.
 # 
 
+# ## Factoring the problem
+# 
+# The problem can be factored into five independent strategies: one for each of the four possible bidding outcomes and one for placing the initial bid.
+
+# ### Strategy 1: winning no bids
+# 
+# In each round, the only choice is whether to buy insurance for one bean.
+# 
+# For rounds 1-6, the expected cost of no insurance is $4\left(\frac{7}{36}\right) = \frac{7}{9} < 1$, so we should never buy insurance.
+# 
+# For rounds 7-10, the expected cost of no insurance is $4\left(\frac{15}{48}\right) = \frac{5}{4} > 1$, so we should always buy insurance.
+# 
+# The expected final bean count (neglecting running out of beans) is $10-6\left(\frac{7}{9}\right)-4 = \frac{4}{3}$.
+
+# ### Strategy 2: DDR only
+# 
+# For rounds 1-2, DDR is not available, so strategy 1 applies.
+# 
+# For rounds 3-6, the expected cost of no insurance is $2\left(\frac{7}{36}\right) = \frac{7}{18} < 1$, so we should never buy insurance.
+# 
+# For rounds 7-10, the expected cost of no insurance is $2\left(\frac{15}{48}\right) = \frac{5}{8} > 1$, so we should never buy insurance.
+# 
+# *I.e.*, the net strategy is to never buy insurance.
+# 
+# The expected final bean count (neglecting running out of beans) is $10-2\left(\frac{7}{9}\right)-4\left(\frac{7}{18}\right)-4\left(\frac{5}{8}\right) \approx 4.39$.
+# 
+# This suggests that DDR is worth slightly more than three beans.
+
+# ### Strategy 3: Forecast only
+# 
+# Given a regional forecast $\leq 4$, the expected cost of no insurance is $\leq \frac{2}{3}$, so we should never buy insurance for these cases.
+# 
+# Given a regional forecast $\geq 5$, the expected cost of no insurance is $\geq \frac{4}{3}$, so we should always buy insurance for these cases.
+# 
+# The expected final bean count is: $10-6\left(\frac{1}{6}\frac{2}{3}+\frac{1}{3}\right)-4\left(\frac{1}{8}\frac{2}{3}+\frac{1}{2}\right) = 5$.
+# 
+# This suggests that the forecast is worth slightly less than 4 beans.
+
+# ### Strategy 4: DDR and Forecast
+# 
+# Again, rounds 1-2 match strategy 3.
+# 
+# For the DDR rounds:
+# 
+# * Given a regional forecast $\leq 5$, the expected cost of no insurance is $\leq \frac{2}{3}$, so we should never buy insurance.
+# * Given a regional forecast $\geq 7$, the expected cost of no insurance is $\geq \frac{4}{3}$, so we should always buy insurance.
+# * Given a regional forecast of 6, the expected cost of no insurance is 1, so it shouldn't matter if we buy insurance.  Since there is no way to aquire beans,
+#   it is probably best to not buy insurance for this case.  This also implies that we should never buy insurance for rounds 3-6, independent of forecast.
+# 
+# The expected final bean count is: $10 - 2\left(\frac{1}{6}\frac{2}{3}+\frac{1}{3}\right)-4\left(\frac{1}{6}\frac{1}{3}+\frac{1}{6}\frac{2}{3}+\frac{1}{6}\right)-4\left(\frac{1}{8}\frac{1}{3}+\frac{1}{8}\frac{2}{3}+\frac{3}{8}\right) \approx 5.77$
+# 
+# This suggests that, given the forecast, DDR is worth less than one bean.
+
+# ### Strategy 5: Initial bid
+# 
+# Because there is no tracking of opponents across games, there is no reason to change the opening bid between games (as there would be in, *e.g.*, the tit-for-tat strategy in the Prisoner's Dilema).  Therefore, the initial bid strategy is a choice among the $11^2 = 121$ possible opening bids.  Although this is the only
+# stage of the game with any interaction with the other players, I think that it is still not an interactive choice.  That is, independently for each of the two
+# bids, it should always be optimal to bid the "fair market value" of the resource (*i.e.*, the difference in expected final beans with or without the resource).
+# Winning the resource by overbidding will tend to put our final score below an optimal play without the resource.  Underbidding *may* be a reasonable strategy as
+# losing the bidding is free.  I think that the influence of bids from teammates can be disregarded.
+# 
+# From the expectation values above, neither resource should ever be worth more than three beans; so, the interesting space to explore has $4^2 = 16$ choices.
+
 # In[8]:
 !/software/challenges/nbconvert/nbconvert.py -f reveal /software/challenges/payforpredictions/payforpredictions.ipynb
